@@ -1,0 +1,54 @@
+import random
+import string
+from datetime import datetime, timedelta
+from pymongo import MongoClient
+import hashlib
+
+def generate_random_string(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def create_random_user():
+    user_id = generate_random_string(12)
+    name = generate_random_string(6) + " " + generate_random_string(8)
+    email = generate_random_string(10) + "@example.com"
+    hashed_password = hashlib.sha256("password".encode('utf-8')).hexdigest()
+    street = str(random.randint(100, 999)) + " " + generate_random_string(10) + " Street"
+    city = generate_random_string(10)
+    state = generate_random_string(2)
+    zip_code = ''.join(random.choices(string.digits, k=5))
+    registration_date = datetime.now()
+    wishlist = []
+    confirmed_wishlist = False
+    wishlist_expiry = registration_date + timedelta(days=1)
+    user_types = ["unregistered", "registered", "admin"]
+    user_type = random.choice(user_types)  # Assign a random user type
+    
+    return {
+        "user_id": user_id,
+        "name": name,
+        "email": email,
+        "hashed_password": hashed_password,
+        "address": {
+            "street": street,
+            "city": city,
+            "state": state,
+            "zip": zip_code
+        },
+        "registration_date": registration_date,
+        "wishlist": wishlist,
+        "confirmed_wishlist": confirmed_wishlist,
+        "wishlist_expiry": wishlist_expiry,
+        "user_type": user_type  # Include the user type
+    }
+
+client = MongoClient('mongodb://localhost:27017/')  # Update with your MongoDB connection string
+db = client['EtsyProducts']
+users_collection = db['Users']
+
+number_of_users = 10  # specify the number of random users to generate
+new_users = [create_random_user() for _ in range(number_of_users)]
+
+users_collection.insert_many(new_users)
+
+print(f'Inserted {number_of_users} new random users into the Users collection.')
+
